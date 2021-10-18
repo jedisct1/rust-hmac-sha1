@@ -1,4 +1,4 @@
-# rust-hmac-sha1
+# rust-hmac-sha1-compact
 
 A small, self-contained SHA1 and HMAC-SHA1 implementation in Rust.
 
