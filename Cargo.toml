@@ -1,0 +1,23 @@
+[package]
+name = "hmac-sha1"
+version = "0.1.0"
+authors = ["Frank Denis <github@pureftpd.org>"]
+edition = "2018"
+description = "A small, self-contained SHA1 and HMAC-SHA1 implementation"
+keywords = ["crypto", "hash", "hmac", "sha1"]
+repository = "https://github.com/jedisct1/rust-hmac-sha1"
+homepage = "https://github.com/jedisct1/rust-hmac-sha1"
+categories = ["algorithms", "cryptography", "no-std"]
+license = "ISC"
+
+[dependencies]
+digest = { version = "0.9", optional = true }
+
+[features]
+default = []
+traits = ["digest"]
+
+[profile.release]
+lto = true
+panic = "abort"
+opt-level = 3
