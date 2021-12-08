@@ -185,26 +185,60 @@ impl HMAC {
     }
 }
 
+/// Wrapped `Hash` type for the `Digest` trait.
+#[cfg(feature = "traits")]
+pub type WrappedHash = digest::core_api::CoreWrapper<Hash>;
+
 #[cfg(feature = "traits")]
 mod digest_trait {
     use super::Hash;
-    use digest::consts::{U32, U64};
-    use digest::{BlockInput, FixedOutputDirty, Reset, Update};
+    use core::fmt;
+    use digest::{
+        block_buffer::Eager,
+        consts::{U20, U64},
+        core_api::{
+            AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, FixedOutputCore,
+            OutputSizeUser, Reset, UpdateCore,
+        },
+        HashMarker,
+    };
 
-    impl BlockInput for Hash {
-        type BlockSize = U64;
-    }
-
-    impl Update for Hash {
-        fn update(&mut self, input: impl AsRef<[u8]>) {
-            self._update(input)
+    impl AlgorithmName for Hash {
+        fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("Sha1")
         }
     }
 
-    impl FixedOutputDirty for Hash {
-        type OutputSize = U32;
+    impl HashMarker for Hash {}
 
-        fn finalize_into_dirty(&mut self, out: &mut digest::Output<Self>) {
+    impl BufferKindUser for Hash {
+        type BufferKind = Eager;
+    }
+
+    impl BlockSizeUser for Hash {
+        type BlockSize = U64;
+    }
+
+    impl OutputSizeUser for Hash {
+        type OutputSize = U20;
+    }
+
+    impl UpdateCore for Hash {
+        #[inline]
+        fn update_blocks(&mut self, blocks: &[Block<Self>]) {
+            for block in blocks {
+                self._update(block)
+            }
+        }
+    }
+
+    impl FixedOutputCore for Hash {
+        fn finalize_fixed_core(
+            &mut self,
+            buffer: &mut Buffer<Self>,
+            out: &mut digest::Output<Self>,
+        ) {
+            self._update(buffer.get_data());
             let h = self.finalize();
             out.copy_from_slice(&h);
         }
@@ -256,5 +290,27 @@ fn main() {
     assert_eq!(
         &h[..],
         &[44, 56, 48, 37, 170, 240, 168, 220, 81, 38, 5, 248, 34, 189, 41, 26, 218, 93, 126, 133]
+    );
+}
+
+#[cfg(feature = "traits")]
+#[test]
+fn main_traits() {
+    use digest::Digest;
+    let mut h = WrappedHash::new();
+    Digest::update(&mut h, b"");
+    assert_eq!(
+        h.finalize().as_slice(),
+        &[218, 57, 163, 238, 94, 107, 75, 13, 50, 85, 191, 239, 149, 96, 24, 144, 175, 216, 7, 9]
+    );
+
+    let mut h = WrappedHash::new();
+    Digest::update(&mut h, b"test");
+    assert_eq!(
+        h.finalize().as_slice(),
+        &[
+            169, 74, 143, 229, 204, 177, 155, 166, 28, 76, 8, 115, 211, 145, 233, 135, 152, 47,
+            187, 211
+        ]
     );
 }
