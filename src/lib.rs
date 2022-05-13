@@ -31,7 +31,7 @@ struct State([u32; 5]);
 
 impl State {
     fn new() -> Self {
-        State([0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0])
+        State([0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0])
     }
 
     fn store(&self, out: &mut [u8]) {
@@ -54,10 +54,10 @@ impl State {
 
             for (i, wi) in w.iter().enumerate() {
                 let (f, k) = match i {
-                    0..=19 => (t[1] & t[2] | !t[1] & t[3], 0x5A827999),
-                    20..=39 => (t[1] ^ t[2] ^ t[3], 0x6ED9EBA1),
-                    40..=59 => (t[1] & t[2] | t[1] & t[3] | t[2] & t[3], 0x8F1BBCDC),
-                    60..=79 => (t[1] ^ t[2] ^ t[3], 0xCA62C1D6),
+                    0..=19 => (t[1] & t[2] | !t[1] & t[3], 0x5a827999),
+                    20..=39 => (t[1] ^ t[2] ^ t[3], 0x6ed9eba1),
+                    40..=59 => (t[1] & t[2] | t[1] & t[3] | t[2] & t[3], 0x8f1bbcdc),
+                    60..=79 => (t[1] ^ t[2] ^ t[3], 0xca62c1d6),
                     _ => unreachable!(),
                 };
                 let g = t[0]
@@ -187,9 +187,10 @@ impl HMAC {
 
 #[cfg(feature = "traits09")]
 mod digest_trait09 {
-    use super::Hash;
     use digest09::consts::{U32, U64};
     use digest09::{BlockInput, FixedOutputDirty, Output, Reset, Update};
+
+    use super::Hash;
 
     impl BlockInput for Hash {
         type BlockSize = U64;
@@ -223,8 +224,8 @@ pub type WrappedHash = digest010::core_api::CoreWrapper<Hash>;
 
 #[cfg(feature = "traits010")]
 mod digest_trait010 {
-    use super::Hash;
     use core::fmt;
+
     use digest010::{
         block_buffer::Eager,
         consts::{U20, U64},
@@ -234,6 +235,8 @@ mod digest_trait010 {
         },
         HashMarker,
     };
+
+    use super::Hash;
 
     impl AlgorithmName for Hash {
         fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
