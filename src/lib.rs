@@ -180,7 +180,7 @@ impl HMAC {
         }
         let mut oh = Hash::new();
         oh.update(&padded[..]);
-        oh.update(&ih.finalize());
+        oh.update(ih.finalize());
         oh.finalize()
     }
 }
@@ -228,6 +228,7 @@ mod digest_trait010 {
 
     use digest010::{
         block_buffer::Eager,
+        const_oid::{AssociatedOid, ObjectIdentifier},
         consts::{U20, U64},
         core_api::{
             AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, FixedOutputCore,
@@ -237,6 +238,10 @@ mod digest_trait010 {
     };
 
     use super::Hash;
+
+    impl AssociatedOid for Hash {
+        const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.14.3.2.26");
+    }
 
     impl AlgorithmName for Hash {
         fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
