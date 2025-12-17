@@ -8,6 +8,7 @@
     clippy::eq_op,
     clippy::identity_op,
     clippy::many_single_char_names,
+    clippy::needless_range_loop,
     clippy::unreadable_literal
 )]
 
@@ -167,7 +168,7 @@ impl HMAC {
         } else {
             k
         };
-        let mut padded = [0x36; 40];
+        let mut padded = [0x36; 64];
         for (p, &k) in padded.iter_mut().zip(k2.iter()) {
             *p ^= k;
         }
@@ -187,7 +188,7 @@ impl HMAC {
 
 #[cfg(feature = "traits09")]
 mod digest_trait09 {
-    use digest09::consts::{U32, U64};
+    use digest09::consts::{U20, U64};
     use digest09::{BlockInput, FixedOutputDirty, Output, Reset, Update};
 
     use super::Hash;
@@ -203,7 +204,7 @@ mod digest_trait09 {
     }
 
     impl FixedOutputDirty for Hash {
-        type OutputSize = U32;
+        type OutputSize = U20;
 
         fn finalize_into_dirty(&mut self, out: &mut Output<Self>) {
             let h = self.finalize();
@@ -321,15 +322,15 @@ fn main() {
     assert_eq!(
         &h[..],
         &[
-            145, 126, 228, 73, 171, 107, 124, 27, 28, 215, 16, 100, 14, 136, 213, 49, 251, 121,
-            205, 27
+            158, 168, 84, 31, 38, 118, 164, 197, 103, 254, 207, 71, 48, 231, 13, 254, 219, 82, 96,
+            68
         ]
     );
 
     let h = HMAC::mac(&[69u8; 250], &[42u8; 50]);
     assert_eq!(
         &h[..],
-        &[44, 56, 48, 37, 170, 240, 168, 220, 81, 38, 5, 248, 34, 189, 41, 26, 218, 93, 126, 133]
+        &[227, 229, 82, 212, 89, 36, 86, 81, 168, 126, 125, 32, 181, 28, 108, 40, 2, 213, 102, 90]
     );
 }
 
