@@ -223,6 +223,14 @@ mod digest_trait09 {
 #[cfg(feature = "traits010")]
 pub type WrappedHash = digest010::core_api::CoreWrapper<Hash>;
 
+#[cfg(feature = "traits011")]
+digest011::buffer_fixed!(
+    /// Wrapped `Hash` type for the `Digest` trait (digest 0.11).
+    pub struct WrappedHash011(Hash);
+    oid: "1.3.14.3.2.26";
+    impl: Debug Clone Default Reset HashMarker BlockSizeUser OutputSizeUser Update FixedOutput FixedOutputReset;
+);
+
 #[cfg(feature = "traits010")]
 mod digest_trait010 {
     use core::fmt;
@@ -292,6 +300,75 @@ mod digest_trait010 {
     }
 }
 
+#[cfg(feature = "traits011")]
+mod digest_trait011 {
+    use core::fmt;
+
+    use digest011::{
+        block_buffer::Eager,
+        const_oid::{AssociatedOid, ObjectIdentifier},
+        consts::{U20, U64},
+        core_api::{
+            AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, FixedOutputCore,
+            OutputSizeUser, Reset, UpdateCore,
+        },
+        HashMarker,
+    };
+
+    use super::Hash;
+
+    impl AssociatedOid for Hash {
+        const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.14.3.2.26");
+    }
+
+    impl AlgorithmName for Hash {
+        fn write_alg_name(f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("Sha1")
+        }
+    }
+
+    impl HashMarker for Hash {}
+
+    impl BufferKindUser for Hash {
+        type BufferKind = Eager;
+    }
+
+    impl BlockSizeUser for Hash {
+        type BlockSize = U64;
+    }
+
+    impl OutputSizeUser for Hash {
+        type OutputSize = U20;
+    }
+
+    impl UpdateCore for Hash {
+        #[inline]
+        fn update_blocks(&mut self, blocks: &[Block<Self>]) {
+            for block in blocks {
+                self._update(block)
+            }
+        }
+    }
+
+    impl FixedOutputCore for Hash {
+        fn finalize_fixed_core(
+            &mut self,
+            buffer: &mut Buffer<Self>,
+            out: &mut digest011::Output<Self>,
+        ) {
+            self._update(buffer.get_data());
+            let h = self.finalize();
+            out.copy_from_slice(&h);
+        }
+    }
+
+    impl Reset for Hash {
+        fn reset(&mut self) {
+            *self = Self::new()
+        }
+    }
+}
+
 #[test]
 fn main() {
     let h = Hash::hash(b"");
@@ -346,6 +423,28 @@ fn main_traits() {
     );
 
     let mut h = WrappedHash::new();
+    Digest::update(&mut h, b"test");
+    assert_eq!(
+        h.finalize().as_slice(),
+        &[
+            169, 74, 143, 229, 204, 177, 155, 166, 28, 76, 8, 115, 211, 145, 233, 135, 152, 47,
+            187, 211
+        ]
+    );
+}
+
+#[cfg(feature = "traits011")]
+#[test]
+fn main_traits011() {
+    use digest011::Digest;
+    let mut h = WrappedHash011::new();
+    Digest::update(&mut h, b"");
+    assert_eq!(
+        h.finalize().as_slice(),
+        &[218, 57, 163, 238, 94, 107, 75, 13, 50, 85, 191, 239, 149, 96, 24, 144, 175, 216, 7, 9]
+    );
+
+    let mut h = WrappedHash011::new();
     Digest::update(&mut h, b"test");
     assert_eq!(
         h.finalize().as_slice(),
