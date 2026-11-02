@@ -305,13 +305,12 @@ mod digest_trait011 {
     use core::fmt;
 
     use digest011::{
-        block_buffer::Eager,
-        const_oid::{AssociatedOid, ObjectIdentifier},
-        consts::{U20, U64},
-        core_api::{
-            AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, FixedOutputCore,
+        block_api::{
+            AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, Eager, FixedOutputCore,
             OutputSizeUser, Reset, UpdateCore,
         },
+        const_oid::{AssociatedOid, ObjectIdentifier},
+        consts::{U20, U64},
         HashMarker,
     };
 
