@@ -227,7 +227,6 @@ pub type WrappedHash = digest010::core_api::CoreWrapper<Hash>;
 digest011::buffer_fixed!(
     /// Wrapped `Hash` type for the `Digest` trait (digest 0.11).
     pub struct WrappedHash011(Hash);
-    oid: "1.3.14.3.2.26";
     impl: Debug Clone Default Reset HashMarker BlockSizeUser OutputSizeUser Update FixedOutput FixedOutputReset;
 );
 
@@ -305,13 +304,13 @@ mod digest_trait011 {
     use core::fmt;
 
     use digest011::{
-        block_buffer::Eager,
-        const_oid::{AssociatedOid, ObjectIdentifier},
-        consts::{U20, U64},
-        core_api::{
+        block_api::{
             AlgorithmName, Block, BlockSizeUser, Buffer, BufferKindUser, FixedOutputCore,
             OutputSizeUser, Reset, UpdateCore,
         },
+        block_buffer::Eager,
+        const_oid::{AssociatedOid, ObjectIdentifier},
+        consts::{U20, U64},
         HashMarker,
     };
 
@@ -319,6 +318,10 @@ mod digest_trait011 {
 
     impl AssociatedOid for Hash {
         const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.14.3.2.26");
+    }
+
+    impl AssociatedOid for super::WrappedHash011 {
+        const OID: ObjectIdentifier = Hash::OID;
     }
 
     impl AlgorithmName for Hash {
@@ -436,21 +439,34 @@ fn main_traits() {
 #[cfg(feature = "traits011")]
 #[test]
 fn main_traits011() {
-    use digest011::Digest;
-    let mut h = WrappedHash011::new();
-    Digest::update(&mut h, b"");
-    assert_eq!(
-        h.finalize().as_slice(),
-        &[218, 57, 163, 238, 94, 107, 75, 13, 50, 85, 191, 239, 149, 96, 24, 144, 175, 216, 7, 9]
-    );
+    use digest011::{
+        const_oid::{AssociatedOid, ObjectIdentifier},
+        Digest,
+    };
+
+    let input: [u8; 256] = core::array::from_fn(|i| i as u8);
+    for len in 0..=input.len() {
+        let input = &input[..len];
+        let expected = Hash::hash(input);
+        for chunk_size in [1, 7, 64, 65] {
+            let mut h = WrappedHash011::new();
+            for chunk in input.chunks(chunk_size) {
+                Digest::update(&mut h, chunk);
+            }
+            assert_eq!(h.finalize_reset().as_slice(), &expected);
+            Digest::update(&mut h, input);
+            assert_eq!(h.finalize().as_slice(), &expected);
+        }
+    }
 
     let mut h = WrappedHash011::new();
+    Digest::update(&mut h, &input[..100]);
+    Digest::reset(&mut h);
     Digest::update(&mut h, b"test");
+    assert_eq!(h.finalize().as_slice(), &Hash::hash(b"test"));
+
     assert_eq!(
-        h.finalize().as_slice(),
-        &[
-            169, 74, 143, 229, 204, 177, 155, 166, 28, 76, 8, 115, 211, 145, 233, 135, 152, 47,
-            187, 211
-        ]
+        WrappedHash011::OID,
+        ObjectIdentifier::new_unwrap("1.3.14.3.2.26")
     );
 }
